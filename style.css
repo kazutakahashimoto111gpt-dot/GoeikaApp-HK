@@ -68,7 +68,7 @@ body {
     ダブルタップなどに関連する
     標準ジェスチャーを抑制
   */
-  touch-action: manipulation;
+  touch-action: none;
 
 }
 
