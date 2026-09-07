@@ -482,6 +482,34 @@ body {
 (max-height: 500px) {
 
 
+  /*
+    回転直後のiPhone Safariは、実際に見える高さより
+    大きい値でレイアウトする場合がある。
+    画像を少しだけ低くし、下のコントローラー用の
+    余裕を明示的に確保する。
+  */
+  #noteImage {
+
+    max-height:
+      calc(var(--app-height) - 112px);
+
+  }
+
+
+
+  /* 鍵盤の上の余白を増やさないよう、画像エリアを上寄せにする */
+  body {
+
+    align-items: flex-start;
+
+    padding-top: 6px;
+
+    box-sizing: border-box;
+
+  }
+
+
+
   #keyControl {
 
     gap: 6px;
