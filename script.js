@@ -40,6 +40,96 @@ const keyDisplay =
 
 
 // =====================================
+// iPhoneの実際に見えている画面高を反映
+// =====================================
+
+function updateAppHeight() {
+
+  const viewport =
+    window.visualViewport;
+
+
+  /*
+    ピンチ操作中の拡大・縮小は対象にしない。
+    画面の回転やSafariの表示領域変化だけを反映する。
+  */
+  if (
+    viewport &&
+    viewport.scale !== 1
+  ) {
+
+    return;
+
+  }
+
+
+  const height =
+    viewport
+      ? viewport.height
+      : window.innerHeight;
+
+
+  document.documentElement.style.setProperty(
+    "--app-height",
+    `${Math.round(height)}px`
+  );
+
+}
+
+
+
+function updateAppHeightAfterRotation() {
+
+  updateAppHeight();
+
+
+  /* iPhoneは回転直後にも高さが変わるため、次の描画後にも測り直す */
+  requestAnimationFrame(
+    () => {
+
+      requestAnimationFrame(
+        updateAppHeight
+      );
+
+    }
+  );
+
+}
+
+
+
+updateAppHeightAfterRotation();
+
+
+
+window.addEventListener(
+  "resize",
+  updateAppHeightAfterRotation
+);
+
+
+
+window.addEventListener(
+  "orientationchange",
+  updateAppHeightAfterRotation
+);
+
+
+
+if (
+  window.visualViewport
+) {
+
+  window.visualViewport.addEventListener(
+    "resize",
+    updateAppHeightAfterRotation
+  );
+
+}
+
+
+
+// =====================================
 // キー設定
 // =====================================
 

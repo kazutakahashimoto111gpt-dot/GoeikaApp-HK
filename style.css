@@ -2,6 +2,14 @@
    画面全体
    ===================================== */
 
+:root {
+
+  /* JavaScriptがiPhoneの実表示高で上書きする */
+  --app-height: 100vh;
+  --app-height: 100dvh;
+
+}
+
 html,
 body {
 
@@ -9,7 +17,7 @@ body {
   height: 100%;
 
   /* iPhone Safari の表示領域の高さに追従する */
-  height: 100dvh;
+  height: var(--app-height);
 
   margin: 0;
   padding: 0;
@@ -92,8 +100,7 @@ body {
 
 
   max-width: 100vw;
-  max-height: 100vh;
-  max-height: 100dvh;
+  max-height: var(--app-height);
 
 
   /*
@@ -121,10 +128,7 @@ body {
   max-width: 100vw;
   /* キーコントローラーと余白の分を画面内に確保する */
   max-height:
-    calc(100vh - 88px);
-
-  max-height:
-    calc(100dvh - 88px);
+    calc(var(--app-height) - 88px);
 
 
   width: auto;
