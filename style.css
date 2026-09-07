@@ -8,6 +8,9 @@ body {
   width: 100%;
   height: 100%;
 
+  /* iPhone Safari の表示領域の高さに追従する */
+  height: 100dvh;
+
   margin: 0;
   padding: 0;
 
@@ -444,6 +447,65 @@ body {
 
     min-width: 84px;
     height: 44px;
+
+    font-size: 16px;
+
+  }
+
+
+
+  #flashMarker {
+
+    width: 55px;
+    height: 55px;
+
+  }
+
+}
+
+
+
+/* =====================================
+   横向き・低い画面向け
+
+   横向きのiPhoneは画面幅が600pxを超えるため、
+   上のスマホ向け指定だけでは標準サイズの
+   キーコントローラーになってしまう。
+   ===================================== */
+
+@media
+(orientation: landscape) and
+(max-height: 500px) {
+
+
+  #keyControl {
+
+    gap: 6px;
+
+    margin-top: 8px;
+
+    padding: 6px 9px;
+
+  }
+
+
+
+  #keyDown,
+  #keyUp {
+
+    width: 40px;
+    height: 40px;
+
+    font-size: 23px;
+
+  }
+
+
+
+  #keyDisplay {
+
+    min-width: 78px;
+    height: 40px;
 
     font-size: 16px;
 
