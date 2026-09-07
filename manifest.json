@@ -1,0 +1,27 @@
+
+{
+  "name": "音符アプリ with H.K.",
+  "short_name": "音符 with H.K.",
+  "description": "音符アプリ with H.K.",
+  "id": "/GoeikaApp-HK/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+
+
+  ]
+}
