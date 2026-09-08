@@ -1593,23 +1593,54 @@ let lastPlayedNote =
 // =====================================
 // 鍵の判定領域
 //
-// image0.png 内の黒鍵の位置。白鍵は画像全体を
-// 10等分して判定し、黒鍵の領域を優先する。
+// IMG_1393.png 内の表記がある黒鍵の位置。
+// 画像の左右端にある無表記の黒鍵は演奏対象にしない。
 // =====================================
 
 const blackKeyAreas = [
-  { left: 0.057, right: 0.129 },
-  { left: 0.170, right: 0.242 },
-  { left: 0.362, right: 0.433 },
-  { left: 0.471, right: 0.542 },
-  { left: 0.579, right: 0.650 },
-  { left: 0.771, right: 0.842 },
-  { left: 0.879, right: 0.951 }
+  { left: 0.066, right: 0.100 },
+  { left: 0.195, right: 0.228 },
+  { left: 0.259, right: 0.293 },
+  { left: 0.387, right: 0.421 },
+  { left: 0.451, right: 0.485 },
+  { left: 0.515, right: 0.549 },
+  { left: 0.644, right: 0.677 },
+  { left: 0.708, right: 0.742 },
+  { left: 0.837, right: 0.870 },
+  { left: 0.900, right: 0.935 }
+];
+
+
+// 白鍵は画像上の縦線に合わせる。均等幅ではないため、実測値を使う。
+const whiteKeyAreas = [
+  { left: 0.013, right: 0.082 },
+  { left: 0.082, right: 0.146 },
+  { left: 0.146, right: 0.211 },
+  { left: 0.211, right: 0.275 },
+  { left: 0.275, right: 0.339 },
+  { left: 0.339, right: 0.403 },
+  { left: 0.403, right: 0.467 },
+  { left: 0.467, right: 0.531 },
+  { left: 0.531, right: 0.595 },
+  { left: 0.595, right: 0.660 },
+  { left: 0.660, right: 0.724 },
+  { left: 0.724, right: 0.788 },
+  { left: 0.788, right: 0.852 },
+  { left: 0.852, right: 0.916 },
+  { left: 0.916, right: 0.986 }
 ];
 
 
 const blackKeyBottomRatio =
-  0.623;
+  0.570;
+
+
+const keyboardTopRatio =
+  0.113;
+
+
+const keyboardBottomRatio =
+  0.885;
 
 
 function findNoteAtKey(
@@ -1619,7 +1650,7 @@ function findNoteAtKey(
 
   // 黒鍵は白鍵の上に重なっているので、先に判定する。
   if (
-    pointerY >= 0 &&
+    pointerY >= keyboardTopRatio &&
     pointerY <= blackKeyBottomRatio
   ) {
 
@@ -1658,17 +1689,9 @@ function findNoteAtKey(
 
 
   // 黒鍵以外の位置は、対応する白鍵を鳴らす。
-  const whiteKeyIndex =
-    Math.floor(
-      pointerX * 10
-    );
-
-
   if (
-    whiteKeyIndex < 0 ||
-    whiteKeyIndex > 9 ||
-    pointerY < 0 ||
-    pointerY > 1
+    pointerY < keyboardTopRatio ||
+    pointerY > keyboardBottomRatio
   ) {
 
     return null;
@@ -1676,11 +1699,39 @@ function findNoteAtKey(
   }
 
 
-  return notes.find(
-    note =>
-      note.keyType === "white" &&
-      note.keyIndex === whiteKeyIndex
-  ) || null;
+  for (
+    const note
+    of notes
+  ) {
+
+    if (
+      note.keyType !== "white"
+    ) {
+
+      continue;
+
+    }
+
+
+    const area =
+      whiteKeyAreas[
+        note.keyIndex
+      ];
+
+
+    if (
+      pointerX >= area.left &&
+      pointerX <= area.right
+    ) {
+
+      return note;
+
+    }
+
+  }
+
+
+  return null;
 
 }
 
