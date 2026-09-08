@@ -1,6 +1,6 @@
 const notes = [
 
-  // IMG_1393.png の表記順。画像の左から右へ、表記のある25鍵を登録する。
+  // keyboard-chart.png の表記順。画像の左から右へ、表記のある25鍵を登録する。
   // 初黄（A3）から十一（A5）までを半音階で割り当てる。
   { no: 0,  name: "初黄",  keyType: "white", keyIndex: 0,  frequency: 220.000 },
   { no: 1,  name: "初鶯",  keyType: "black", keyIndex: 0,  frequency: 233.082 },
