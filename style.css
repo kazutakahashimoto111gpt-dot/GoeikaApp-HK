@@ -696,9 +696,10 @@ body {
 
 
   /*
-    中央にメッセージを表示
+    通常は隠し、音声開始に失敗した場合だけ
+    JavaScriptから再表示する。
   */
-  display: flex;
+  display: none;
 
   justify-content: center;
 

@@ -1039,60 +1039,6 @@ document.addEventListener(
 
 
 
-    // ----------------------------------------
-    // アプリが再び画面に表示された
-    // ----------------------------------------
-
-    if (
-      document.visibilityState ===
-        "visible"
-    ) {
-
-
-      /*
-        復帰した時点では、
-
-        AudioContextは作らない。
-
-
-        hiddenになったときに
-
-        audioContext = null;
-
-        としてあるため、
-
-
-        このあとユーザーが
-
-        「タップして開始」
-
-        を押したときに
-
-        ensureAudioContext()
-
-        が呼ばれ、
-
-
-        新しいAudioContextが
-        ユーザー操作の中で作成される。
-      */
-
-
-      // メッセージを初期状態へ戻す
-
-      audioStartMessage.textContent =
-        "タップして開始";
-
-
-
-      // オーバーレイを再表示
-
-      audioStartOverlay.style.display =
-        "flex";
-
-    }
-
-
   }
 );
 
