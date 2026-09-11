@@ -154,6 +154,10 @@ body {
   -webkit-user-select: none;
 
 
+  /* Safariでの画像ドラッグを抑制 */
+  -webkit-user-drag: none;
+
+
   /*
     iPhoneなどで
     長押しメニューが出るのを抑制

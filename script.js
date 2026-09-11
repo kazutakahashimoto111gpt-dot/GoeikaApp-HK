@@ -1941,6 +1941,13 @@ image.addEventListener(
   async function(event) {
 
 
+    /*
+      iPhone Safariなどの長押し時に出る画像の呼び出し・選択用の
+      既定操作を止め、鍵を押し続ける演奏操作として扱う。
+    */
+    event.preventDefault();
+
+
     // ---------------------------------
     // 最初に押したpointerだけを使う
     // ---------------------------------
@@ -2110,6 +2117,19 @@ image.addEventListener(
 
   }
 
+);
+
+
+
+// 長押し・右クリックによる画像メニューも鍵盤上では表示しない。
+image.addEventListener(
+  "contextmenu",
+
+  function(event) {
+
+    event.preventDefault();
+
+  }
 );
 
 
