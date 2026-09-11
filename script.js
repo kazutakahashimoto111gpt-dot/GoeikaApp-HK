@@ -14,6 +14,12 @@ const flashMarker =
   );
 
 
+const keyPressMarker =
+  document.getElementById(
+    "keyPressMarker"
+  );
+
+
 const keyControl =
   document.getElementById(
     "keyControl"
@@ -909,6 +915,9 @@ document.addEventListener(
       stopSound();
 
 
+      hideKeyPress();
+
+
       // --------------------------------------
       // 現在のAudioContextを退避
       // --------------------------------------
@@ -1614,6 +1623,14 @@ let activePointerId =
 let lastPlayedNote =
   null;
 
+
+/*
+  現在、押下表示を出している音符。
+  画面サイズが変わった場合にも位置を計算し直せるように保持する。
+*/
+let pressedNote =
+  null;
+
 // =====================================
 // 鍵の判定領域
 //
@@ -1632,6 +1649,29 @@ const blackKeyAreas = [
   { left: 0.708, right: 0.742 },
   { left: 0.837, right: 0.870 },
   { left: 0.900, right: 0.935 }
+];
+
+
+/*
+  画像の左右端に描かれている黒鍵。
+  演奏対象ではないためblackKeyAreasには入れないが、白鍵の
+  押下表示が重ならないよう、切り欠き計算だけに使用する。
+*/
+const nonPlayableBlackKeyAreas = [
+  /*
+    実際の黒鍵より少しだけ白鍵端まで広げる。
+    黒鍵は白鍵領域の数ピクセル内側にあるため、この広がりがないと
+    切り欠き用の「端から始まる範囲」として認識されない。
+  */
+  { left: 0.013, right: 0.035 },
+  { left: 0.965, right: 0.986 }
+];
+
+
+
+const pressMaskBlackKeyAreas = [
+  ...blackKeyAreas,
+  ...nonPlayableBlackKeyAreas
 ];
 
 
@@ -1761,6 +1801,239 @@ function findNoteAtKey(
 
 
 // =====================================
+// 鍵の押下表示
+// =====================================
+
+function showKeyPress(
+  note
+) {
+
+
+  const keyArea =
+    note.keyType === "black"
+      ? blackKeyAreas[note.keyIndex]
+      : whiteKeyAreas[note.keyIndex];
+
+
+  if (
+    !keyArea ||
+    !image.clientWidth ||
+    !image.clientHeight
+  ) {
+
+    return;
+
+  }
+
+
+  const topRatio =
+    keyboardTopRatio;
+
+
+  const bottomRatio =
+    note.keyType === "black"
+      ? blackKeyBottomRatio
+      : keyboardBottomRatio;
+
+
+  keyPressMarker.style.left =
+    `${keyArea.left * image.clientWidth}px`;
+
+
+  keyPressMarker.style.top =
+    `${topRatio * image.clientHeight}px`;
+
+
+  keyPressMarker.style.width =
+    `${(keyArea.right - keyArea.left) * image.clientWidth}px`;
+
+
+  keyPressMarker.style.height =
+    `${(bottomRatio - topRatio) * image.clientHeight}px`;
+
+
+
+  if (
+    note.keyType === "white"
+  ) {
+
+    /*
+      白鍵の上部は黒鍵と重なっている。
+      その範囲を切り欠いて、白鍵を押したときに黒鍵まで
+      金色に光らないようにする。
+    */
+    let leftCut =
+      0;
+
+
+    let rightCut =
+      100;
+
+
+    const keyWidth =
+      keyArea.right -
+      keyArea.left;
+
+
+    for (
+      const blackKeyArea
+      of pressMaskBlackKeyAreas
+    ) {
+
+      const overlapLeft =
+        Math.max(
+          keyArea.left,
+          blackKeyArea.left
+        );
+
+
+      const overlapRight =
+        Math.min(
+          keyArea.right,
+          blackKeyArea.right
+        );
+
+
+      if (
+        overlapLeft >=
+        overlapRight
+      ) {
+
+        continue;
+
+      }
+
+
+      const localLeft =
+        (overlapLeft - keyArea.left) /
+        keyWidth * 100;
+
+
+      const localRight =
+        (overlapRight - keyArea.left) /
+        keyWidth * 100;
+
+
+      if (
+        localLeft <= 0.01
+      ) {
+
+        leftCut =
+          Math.max(
+            leftCut,
+            localRight
+          );
+
+      }
+
+
+      if (
+        localRight >= 99.99
+      ) {
+
+        rightCut =
+          Math.min(
+            rightCut,
+            localLeft
+          );
+
+      }
+
+    }
+
+
+    const blackKeyBottom =
+      (blackKeyBottomRatio - topRatio) /
+      (bottomRatio - topRatio) * 100;
+
+
+    const clipPath =
+      `polygon(${leftCut}% 0%, ${rightCut}% 0%, ` +
+      `${rightCut}% ${blackKeyBottom}%, 100% ${blackKeyBottom}%, ` +
+      `100% 100%, 0% 100%, 0% ${blackKeyBottom}%, ` +
+      `${leftCut}% ${blackKeyBottom}%)`;
+
+
+    keyPressMarker.style.clipPath =
+      clipPath;
+
+
+    keyPressMarker.style.webkitClipPath =
+      clipPath;
+
+  }
+
+  else {
+
+    keyPressMarker.style.clipPath =
+      "none";
+
+
+    keyPressMarker.style.webkitClipPath =
+      "none";
+
+  }
+
+
+  keyPressMarker.className =
+    note.keyType === "black"
+      ? "is-visible is-black"
+      : "is-visible is-white";
+
+
+  pressedNote =
+    note;
+
+}
+
+
+
+function hideKeyPress() {
+
+
+  keyPressMarker.className =
+    "";
+
+
+  pressedNote =
+    null;
+
+}
+
+
+
+function refreshKeyPress() {
+
+
+  if (
+    pressedNote
+  ) {
+
+    showKeyPress(
+      pressedNote
+    );
+
+  }
+
+}
+
+
+
+window.addEventListener(
+  "resize",
+
+  function() {
+
+    requestAnimationFrame(
+      refreshKeyPress
+    );
+
+  }
+);
+
+
+
+// =====================================
 // 指定位置の鍵を探して鳴らす
 // =====================================
 
@@ -1818,6 +2091,8 @@ function playNoteAtPointer(
 
     // 鍵盤の外へ出たら、押したままでも音を止める。
     stopSound();
+
+    hideKeyPress();
 
     lastPlayedNote =
       null;
@@ -1906,6 +2181,12 @@ function playNoteAtPointer(
 
   playSound(
     shiftedFrequency
+  );
+
+
+  // 鳴らしている鍵を、画像上でも押された状態にする。
+  showKeyPress(
+    selectedNote
   );
 
 
@@ -2337,6 +2618,9 @@ function finishPointerPlaying(
   stopSound();
 
 
+  hideKeyPress();
+
+
 
   // ---------------------------------
   // 演奏状態を解除
@@ -2422,6 +2706,9 @@ image.addEventListener(
     ) {
 
       stopSound();
+
+
+      hideKeyPress();
 
       isPointerPlaying =
         false;
