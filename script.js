@@ -2134,6 +2134,40 @@ image.addEventListener(
 
 
 
+/*
+  iOSのルーペはPointer Eventではなく、長押し開始時のTouch Eventから
+  起動することがある。非パッシブで既定操作を止め、選択ルーペを出さない。
+  演奏に使うPointer Eventはこの後も通常どおり受け取る。
+*/
+image.addEventListener(
+  "touchstart",
+
+  function(event) {
+
+    event.preventDefault();
+
+  },
+
+  {
+    passive: false
+  }
+);
+
+
+
+// 選択開始イベントが発生した場合にも、鍵盤上では選択させない。
+image.addEventListener(
+  "selectstart",
+
+  function(event) {
+
+    event.preventDefault();
+
+  }
+);
+
+
+
 // =====================================
 // 押したまま移動
 // =====================================
