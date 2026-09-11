@@ -49,7 +49,7 @@
 // ====================================================
 
 const CACHE_NAME =
-  "v2.0.55";
+  "v2.0.56";
 
 
 
@@ -82,8 +82,6 @@ const FILES_TO_CACHE = [
 
   "./",
 
-  "./index.html",
-
   "./style.css",
 
   "./script.js",
@@ -93,6 +91,8 @@ const FILES_TO_CACHE = [
   "./notes.js",
 
   "./keyboard-chart.png",
+
+  "./icons/favicon-48.png",
 
 
   // -----------------------------
@@ -156,7 +156,7 @@ self.addEventListener(
 
             たとえば、
 
-            index.html
+            ルートHTML
             style.css
             script.js
 
@@ -337,20 +337,30 @@ self.addEventListener(
     // キャッシュ優先で取得
     // =====================================
 
+    /*
+      HTMLの入口は「./」へ統一する。
+      既存のインストールがindex.htmlを開始URLとして保持していても、
+      ナビゲーションでは同じルートHTMLを返す。
+    */
+    const cacheRequest =
+      event.request.mode === "navigate"
+        ? "./"
+        : event.request;
+
     event.respondWith(
 
 
       /*
         まず、
 
-        「このリクエストと同じものが
-          キャッシュに保存されているか？」
+          「このリクエストに対応するものが
+            キャッシュに保存されているか？」
 
         を調べる。
       */
 
       caches.match(
-        event.request
+        cacheRequest
       )
 
 
@@ -453,7 +463,7 @@ self.addEventListener(
                 // 現在のキャッシュを開く
                 // -----------------------------
 
-                caches.open(
+                return caches.open(
                   CACHE_NAME
                 )
 
@@ -473,13 +483,28 @@ self.addEventListener(
                       すぐ取得できるようになる。
                     */
 
-                    cache.put(
+                    return cache.put(
                       event.request,
                       responseClone
                     );
 
 
-                  });
+                  })
+
+
+                  .catch(error => {
+
+                    console.warn(
+                      "取得したファイルをキャッシュへ保存できませんでした。",
+                      error
+                    );
+
+                  })
+
+
+                  .then(() =>
+                    networkResponse
+                  );
 
 
               }

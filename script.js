@@ -20,12 +20,6 @@ const keyPressMarker =
   );
 
 
-const keyControl =
-  document.getElementById(
-    "keyControl"
-  );
-
-
 const keyDown =
   document.getElementById(
     "keyDown"
@@ -139,21 +133,52 @@ if (
 // キー設定
 // =====================================
 
-let keyShift =
-  Number(
-    localStorage.getItem(
-      "kongoKeyShift"
-    )
-  );
+function loadKeyShift() {
+
+  try {
+
+    const storedValue =
+      localStorage.getItem(
+        "kongoKeyShift"
+      );
 
 
-if (
-  Number.isNaN(keyShift)
-) {
+    if (
+      storedValue === null
+    ) {
 
-  keyShift = 0;
+      return 0;
+
+    }
+
+
+    const parsedValue =
+      Number(storedValue);
+
+
+    return Number.isInteger(parsedValue)
+      ? parsedValue
+      : 0;
+
+  }
+
+  catch (error) {
+
+    console.warn(
+      "キー設定を読み込めませんでした。",
+      error
+    );
+
+
+    return 0;
+
+  }
 
 }
+
+
+let keyShift =
+  loadKeyShift();
 
 
 
@@ -241,10 +266,23 @@ function updateKeyDisplay() {
 
 function saveKeyShift() {
 
-  localStorage.setItem(
-    "kongoKeyShift",
-    keyShift
-  );
+  try {
+
+    localStorage.setItem(
+      "kongoKeyShift",
+      keyShift
+    );
+
+  }
+
+  catch (error) {
+
+    console.warn(
+      "キー設定を保存できませんでした。",
+      error
+    );
+
+  }
 
 }
 
@@ -438,47 +476,6 @@ let audioContext =
 
 
 // ============================================
-// AudioContext再作成フラグ
-// ============================================
-
-let audioContextNeedsReset =
-  false;
-
-
-/*
-  この変数は、
-
-  「AudioContextを作り直す必要があるか」
-
-  を記憶するためのもの。
-
-
-  false
-    ↓
-  作り直す必要なし
-
-
-  true
-    ↓
-  次の音声準備時に作り直す
-
-
-  という意味。
-
-
-  iPhoneなどでは、
-
-  アプリをバックグラウンドへ移動したあと
-  AudioContextが正常に復帰しない場合がある。
-
-  そのため、
-
-  バックグラウンドへ移動したことを
-  検出したら true にする。
-*/
-
-
-// ============================================
 // AudioContextを使用可能な状態にする
 
   // audioContext.state : 現在のAudioContextの状態を表します。
@@ -513,69 +510,6 @@ async function ensureAudioContext() {
 
     audioContext =
       new AudioContextClass();
-
-  }
-
-
-
-  // ------------------------------------------
-  // バックグラウンドから復帰した場合
-  // ------------------------------------------
-
-  if (
-    audioContextNeedsReset
-  ) {
-
-    /*
-      古いAudioContextをそのまま信用せず、
-      ユーザー操作中に
-      新しいAudioContextへ交換する。
-
-      フラグは先に解除して、
-      連続タップで二重に
-      作り直されにくくする。
-    */
-
-    audioContextNeedsReset =
-      false;
-
-
-
-    // 古いAudioContextを退避
-
-    const oldAudioContext =
-      audioContext;
-
-
-
-    // 新しいAudioContextを作成
-
-    audioContext =
-      new AudioContextClass();
-
-
-
-    // 古いAudioContextを終了
-
-    if (
-      oldAudioContext &&
-      oldAudioContext.state !==
-        "closed"
-    ) {
-
-      oldAudioContext.close()
-        .catch(
-          function(error) {
-
-            console.warn(
-              "AudioContextを終了できませんでした。",
-              error
-            );
-
-          }
-        );
-
-    }
 
   }
 
@@ -715,8 +649,7 @@ audioStartOverlay.addEventListener(
     if (
       audioContext &&
       audioContext.state ===
-        "running" &&
-      !audioContextNeedsReset
+        "running"
     ) {
 
       audioStartOverlay.style.display =
@@ -745,21 +678,8 @@ audioStartOverlay.addEventListener(
       にまとめて任せる。
 
 
-      初回起動なら
-        ↓
-      resume()
-
-
-      バックグラウンド復帰後なら
-        ↓
-      新しいAudioContextを作成
-        ↓
-      古いAudioContextの終了を試す
-        ↓
-      resume()
-
-
-      という処理になる。
+      AudioContextがなければ新しく作成し、
+      suspendedまたはinterruptedならresume()で再開する。
     */
 
     ensureAudioContext()
@@ -774,8 +694,7 @@ audioStartOverlay.addEventListener(
 
           if (
             audioContext.state ===
-              "running" &&
-            !audioContextNeedsReset
+              "running"
           ) {
 
 
@@ -814,12 +733,7 @@ audioStartOverlay.addEventListener(
         /*
           500ミリ秒経っても
 
-          AudioContextがrunningでない、
-
-          または
-
-          再作成処理が必要なら、
-
+          AudioContextがrunningでなければ、
           ユーザーへ
           もう一度タップしてもらう。
         */
@@ -827,8 +741,7 @@ audioStartOverlay.addEventListener(
         if (
           !audioContext ||
           audioContext.state !==
-            "running" ||
-          audioContextNeedsReset
+            "running"
         ) {
 
           audioStartMessage.textContent =
@@ -884,29 +797,8 @@ document.addEventListener(
         などの可能性がある。
 
 
-        今回はこの時点で、
-
-        使用中のAudioContextを
-        完全に終了する。
-
-
-        従来はここで
-
-        audioContextNeedsReset = true;
-
-        として、
-
-        復帰後のユーザー操作時に
-        AudioContextを交換していた。
-
-
-        今回は、
-
-        画面から見えなくなった時点で
-        古いAudioContextを終了し、
-
-        次回は完全に新しい
-        AudioContextを作る方式にする。
+        この時点で古いAudioContextを終了して参照を外す。
+        次回の演奏操作では新しいAudioContextを作成する。
       */
 
 
@@ -949,42 +841,6 @@ document.addEventListener(
 
       audioContext =
         null;
-
-
-
-      // --------------------------------------
-      // 再作成フラグも解除
-      // --------------------------------------
-
-      /*
-        今回は古いAudioContextそのものを
-        ここで終了するので、
-
-        従来の
-
-        「あとで作り直す必要がある」
-
-        というフラグは必要ない。
-
-
-        falseにしておくことで、
-
-        次回ensureAudioContext()が
-        呼ばれたとき、
-
-        audioContext === null
-
-        の判定によって
-        新しいAudioContextが
-
-        1個だけ作成される。
-      */
-
-      audioContextNeedsReset =
-        false;
-
-
-
       // --------------------------------------
       // 古いAudioContextを終了
       // --------------------------------------
@@ -1631,42 +1487,15 @@ let lastPlayedNote =
 let pressedNote =
   null;
 
-// =====================================
-// 鍵の判定領域
-//
-// keyboard-chart.png 内の表記がある黒鍵の位置。
-// 画像の左右端にある無表記の黒鍵は演奏対象にしない。
-// =====================================
-
-const blackKeyAreas = [
-  { left: 0.066, right: 0.100 },
-  { left: 0.195, right: 0.228 },
-  { left: 0.259, right: 0.293 },
-  { left: 0.387, right: 0.421 },
-  { left: 0.451, right: 0.485 },
-  { left: 0.515, right: 0.549 },
-  { left: 0.644, right: 0.677 },
-  { left: 0.708, right: 0.742 },
-  { left: 0.837, right: 0.870 },
-  { left: 0.900, right: 0.935 }
-];
-
-
-/*
-  画像の左右端に描かれている黒鍵。
-  演奏対象ではないためblackKeyAreasには入れないが、白鍵の
-  押下表示が重ならないよう、切り欠き計算だけに使用する。
-*/
-const nonPlayableBlackKeyAreas = [
-  /*
-    実際の黒鍵より少しだけ白鍵端まで広げる。
-    黒鍵は白鍵領域の数ピクセル内側にあるため、この広がりがないと
-    切り欠き用の「端から始まる範囲」として認識されない。
-  */
-  { left: 0.013, right: 0.035 },
-  { left: 0.965, right: 0.986 }
-];
-
+// 音符データと同じファイルにまとめた、鍵盤画像の対応情報を使用する。
+const {
+  blackKeyAreas,
+  nonPlayableBlackKeyAreas,
+  whiteKeyAreas,
+  blackKeyBottomRatio,
+  keyboardTopRatio,
+  keyboardBottomRatio
+} = keyboardLayout;
 
 
 const pressMaskBlackKeyAreas = [
@@ -1675,36 +1504,43 @@ const pressMaskBlackKeyAreas = [
 ];
 
 
-// 白鍵は画像上の縦線に合わせる。均等幅ではないため、実測値を使う。
-const whiteKeyAreas = [
-  { left: 0.013, right: 0.082 },
-  { left: 0.082, right: 0.146 },
-  { left: 0.146, right: 0.211 },
-  { left: 0.211, right: 0.275 },
-  { left: 0.275, right: 0.339 },
-  { left: 0.339, right: 0.403 },
-  { left: 0.403, right: 0.467 },
-  { left: 0.467, right: 0.531 },
-  { left: 0.531, right: 0.595 },
-  { left: 0.595, right: 0.660 },
-  { left: 0.660, right: 0.724 },
-  { left: 0.724, right: 0.788 },
-  { left: 0.788, right: 0.852 },
-  { left: 0.852, right: 0.916 },
-  { left: 0.916, right: 0.986 }
-];
+function validateKeyboardImageDimensions() {
+
+  if (
+    image.naturalWidth !== keyboardLayout.imageWidth ||
+    image.naturalHeight !== keyboardLayout.imageHeight
+  ) {
+
+    console.error(
+      "鍵盤画像の寸法が鍵判定データと一致しません。",
+      {
+        expected: `${keyboardLayout.imageWidth}x${keyboardLayout.imageHeight}`,
+        actual: `${image.naturalWidth}x${image.naturalHeight}`
+      }
+    );
+
+  }
+
+}
 
 
-const blackKeyBottomRatio =
-  0.570;
+if (
+  image.complete
+) {
 
+  validateKeyboardImageDimensions();
 
-const keyboardTopRatio =
-  0.113;
+}
 
+else {
 
-const keyboardBottomRatio =
-  0.885;
+  image.addEventListener(
+    "load",
+    validateKeyboardImageDimensions,
+    { once: true }
+  );
+
+}
 
 
 function findNoteAtKey(
@@ -2594,6 +2430,29 @@ image.addEventListener(
 // スライド演奏終了
 // =====================================
 
+function resetPointerPlaying() {
+
+  // 指・マウスを離したら、持続音を滑らかに止める。
+  stopSound();
+
+
+  hideKeyPress();
+
+
+  isPointerPlaying =
+    false;
+
+
+  activePointerId =
+    null;
+
+
+  lastPlayedNote =
+    null;
+
+}
+
+
 function finishPointerPlaying(
   event
 ) {
@@ -2614,28 +2473,7 @@ function finishPointerPlaying(
 
 
 
-  // 指・マウスを離したら、持続音を滑らかに止める。
-  stopSound();
-
-
-  hideKeyPress();
-
-
-
-  // ---------------------------------
-  // 演奏状態を解除
-  // ---------------------------------
-
-  isPointerPlaying =
-    false;
-
-
-  activePointerId =
-    null;
-
-
-  lastPlayedNote =
-    null;
+  resetPointerPlaying();
 
 }
 
@@ -2661,6 +2499,30 @@ image.addEventListener(
   "pointercancel",
 
   finishPointerPlaying
+);
+
+
+/*
+  Pointer Captureを開始できなかった場合でも、画像外で指やマウスを
+  離したことを検出し、持続音が残らないようにする。
+  画像上の終了イベントはwindowへも伝わるが、2回目はID判定で無視される。
+*/
+window.addEventListener(
+  "pointerup",
+  finishPointerPlaying
+);
+
+
+window.addEventListener(
+  "pointercancel",
+  finishPointerPlaying
+);
+
+
+// ブラウザ外で離された場合にも、ウィンドウの失焦時に演奏状態を解除する。
+window.addEventListener(
+  "blur",
+  resetPointerPlaying
 );
 
 
@@ -2705,21 +2567,7 @@ image.addEventListener(
       activePointerId
     ) {
 
-      stopSound();
-
-
-      hideKeyPress();
-
-      isPointerPlaying =
-        false;
-
-
-      activePointerId =
-        null;
-
-
-      lastPlayedNote =
-        null;
+      resetPointerPlaying();
 
     }
 
@@ -2755,12 +2603,36 @@ const infoCloseButton =
   );
 
 
+let infoPreviouslyFocusedElement =
+  null;
+
+
+function isInfoDialogOpen() {
+
+  return infoOverlay.getAttribute(
+    "aria-hidden"
+  ) === "false";
+
+}
+
+
 
 // -------------------------------------
 // アプリ情報を開く
 // -------------------------------------
 
 function openInfoDialog() {
+
+  infoPreviouslyFocusedElement =
+    document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+
+
+  document.body.classList.add(
+    "is-info-open"
+  );
+
 
   infoOverlay.style.display =
     "flex";
@@ -2789,6 +2661,15 @@ function openInfoDialog() {
 
 function closeInfoDialog() {
 
+  if (
+    !isInfoDialogOpen()
+  ) {
+
+    return;
+
+  }
+
+
   infoOverlay.style.display =
     "none";
 
@@ -2797,6 +2678,25 @@ function closeInfoDialog() {
     "aria-hidden",
     "true"
   );
+
+
+  document.body.classList.remove(
+    "is-info-open"
+  );
+
+
+  const focusTarget =
+    infoPreviouslyFocusedElement &&
+    infoPreviouslyFocusedElement.isConnected
+      ? infoPreviouslyFocusedElement
+      : infoButton;
+
+
+  infoPreviouslyFocusedElement =
+    null;
+
+
+  focusTarget.focus();
 
 }
 
@@ -2890,7 +2790,7 @@ infoDialog.addEventListener(
 
 
 // -------------------------------------
-// PCではEscapeキーでも閉じられる
+// PCではEscapeで閉じ、Tabキーの移動をダイアログ内に限定する
 // -------------------------------------
 
 document.addEventListener(
@@ -2899,14 +2799,82 @@ document.addEventListener(
   function(event) {
 
     if (
-      event.key ===
-        "Escape" &&
-
-      infoOverlay.style.display ===
-        "flex"
+      !isInfoDialogOpen()
     ) {
 
+      return;
+
+    }
+
+
+    if (
+      event.key ===
+        "Escape"
+    ) {
+
+      event.preventDefault();
+
+
       closeInfoDialog();
+
+
+      return;
+
+    }
+
+
+    if (
+      event.key ===
+        "Tab"
+    ) {
+
+      const focusableElements =
+        infoDialog.querySelectorAll(
+          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+        );
+
+
+      if (
+        focusableElements.length === 0
+      ) {
+
+        event.preventDefault();
+
+
+        return;
+
+      }
+
+
+      const firstElement =
+        focusableElements[0];
+
+
+      const lastElement =
+        focusableElements[
+          focusableElements.length - 1
+        ];
+
+
+      if (
+        event.shiftKey &&
+        document.activeElement === firstElement
+      ) {
+
+        event.preventDefault();
+        lastElement.focus();
+
+      }
+
+      else if (
+        !event.shiftKey &&
+        document.activeElement === lastElement
+      ) {
+
+        event.preventDefault();
+        firstElement.focus();
+
+      }
 
     }
 

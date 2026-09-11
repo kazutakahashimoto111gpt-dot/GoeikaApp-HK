@@ -4,11 +4,11 @@
   "short_name": "音符 with H.K.",
   "description": "音符アプリ with H.K.",
   "id": "/GoeikaApp-HK/",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#f5f0e6",
+  "theme_color": "#f5f0e6",
   "orientation": "any",
   "icons": [
     {

@@ -8,6 +8,9 @@
   --app-height: 100vh;
   --app-height: 100dvh;
 
+  --compact-layout-reserved-height: 112px;
+  --portrait-content-shift: 26px;
+
 }
 
 html,
@@ -82,6 +85,14 @@ body {
     標準ジェスチャーを抑制
   */
   touch-action: none;
+
+}
+
+
+/* 情報ダイアログ表示中は、ダイアログ本文の縦スクロールを許可する。 */
+body.is-info-open {
+
+  touch-action: auto;
 
 }
 
@@ -651,6 +662,57 @@ body {
 
 
 /* =====================================
+   横向きの低い画面と縦持ち画面で共通の操作部品サイズ
+   ===================================== */
+
+@media
+(orientation: landscape) and
+(max-height: 500px),
+(orientation: portrait) {
+
+  #keyControl {
+
+    gap: 6px;
+
+    margin-top: 8px;
+
+    padding: 6px 9px;
+
+  }
+
+
+  #keyDown,
+  #keyUp {
+
+    width: 40px;
+    height: 40px;
+
+    font-size: 23px;
+
+  }
+
+
+  #keyDisplay {
+
+    min-width: 78px;
+    height: 40px;
+
+    font-size: 16px;
+
+  }
+
+
+  #flashMarker {
+
+    width: 55px;
+    height: 55px;
+
+  }
+
+}
+
+
+/* =====================================
    横向き・低い画面向け
 
    横向きのiPhoneは画面幅が600pxを超えるため、
@@ -672,7 +734,7 @@ body {
   #noteImage {
 
     max-height:
-      calc(var(--app-height) - 112px);
+      calc(var(--app-height) - var(--compact-layout-reserved-height));
 
   }
 
@@ -688,51 +750,6 @@ body {
     box-sizing: border-box;
 
   }
-
-
-
-  #keyControl {
-
-    gap: 6px;
-
-    margin-top: 8px;
-
-    padding: 6px 9px;
-
-  }
-
-
-
-  #keyDown,
-  #keyUp {
-
-    width: 40px;
-    height: 40px;
-
-    font-size: 23px;
-
-  }
-
-
-
-  #keyDisplay {
-
-    min-width: 78px;
-    height: 40px;
-
-    font-size: 16px;
-
-  }
-
-
-
-  #flashMarker {
-
-    width: 55px;
-    height: 55px;
-
-  }
-
 }
 
 
@@ -794,7 +811,7 @@ body {
       回転前の下方向への移動は縦持ち画面では左方向への移動になる。
     */
     transform:
-      translateY(26px);
+      translateY(var(--portrait-content-shift));
 
   }
 
@@ -804,55 +821,9 @@ body {
 
     max-width: var(--app-height);
     max-height:
-      calc(100vw - 112px);
+      calc(100vw - var(--compact-layout-reserved-height));
 
   }
-
-
-
-  /* 横向き・低い画面向けの操作部品サイズへ統一 */
-  #keyControl {
-
-    gap: 6px;
-
-    margin-top: 8px;
-
-    padding: 6px 9px;
-
-  }
-
-
-
-  #keyDown,
-  #keyUp {
-
-    width: 40px;
-    height: 40px;
-
-    font-size: 23px;
-
-  }
-
-
-
-  #keyDisplay {
-
-    min-width: 78px;
-    height: 40px;
-
-    font-size: 16px;
-
-  }
-
-
-
-  #flashMarker {
-
-    width: 55px;
-    height: 55px;
-
-  }
-
 }
 
 
@@ -1153,6 +1124,15 @@ body {
   box-sizing: border-box;
 
 
+  overflow-y: auto;
+
+
+  overscroll-behavior: contain;
+
+
+  touch-action: pan-y;
+
+
   line-height: normal;
 
 }
@@ -1170,6 +1150,18 @@ body {
 
   width:
     min(360px, 100%);
+
+
+  max-height: 100%;
+
+
+  overflow-y: auto;
+
+
+  -webkit-overflow-scrolling: touch;
+
+
+  touch-action: pan-y;
 
 
   box-sizing:
