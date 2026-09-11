@@ -905,6 +905,10 @@ document.addEventListener(
 
 
 
+      // 押し続けている音も、画面を離れた時点で確実に止める。
+      stopSound();
+
+
       // --------------------------------------
       // 現在のAudioContextを退避
       // --------------------------------------
@@ -1048,9 +1052,44 @@ document.addEventListener(
 // 琴風サウンド
 // =====================================
 
+let activeSound =
+  null;
+
+
+
+function stopSound() {
+
+
+  if (
+    !activeSound
+  ) {
+
+    return;
+
+  }
+
+
+  const soundToStop =
+    activeSound;
+
+
+  activeSound =
+    null;
+
+
+  soundToStop.stop();
+
+}
+
+
+
 function playSound(
   frequency
 ) {
+
+
+  // 新しい鍵へ移ったときは、前の持続音を滑らかに消す。
+  stopSound();
 
 
   const now =
@@ -1083,28 +1122,17 @@ function playSound(
 
 
   /*
-    0.01秒で
-    一気に音量を上げる
+    0.02秒で穏やかに立ち上げる。
+
+    鋭すぎる立ち上がりを避けて、ブザーのように持続しても
+    耳に刺さりにくい音にする。
   */
 
   masterGain.gain
     .exponentialRampToValueAtTime(
-      0.6,
-      now + 0.01
+      0.38,
+      now + 0.02
     );
-
-
-  /*
-    その後1.8秒かけて
-    音量をほぼ0まで下げる
-  */
-
-  masterGain.gain
-    .exponentialRampToValueAtTime(
-      0.0001,
-      now + 1.8
-    );
-
 
 
   // ---------------------------------
@@ -1306,24 +1334,74 @@ function playSound(
 
 
   // ---------------------------------
-  // 再生終了
+  // 持続音の終了
   // ---------------------------------
 
-  osc1.stop(
-    now + 1.8
-  );
+  let hasStopped =
+    false;
 
 
-  osc2.stop(
-    now + 1.8
-  );
+  activeSound = {
+
+    stop() {
 
 
-  osc3.stop(
-    now + 1.8
-  );
+      if (
+        hasStopped
+      ) {
+
+        return;
+
+      }
 
 
+      hasStopped =
+        true;
+
+
+      const releaseTime =
+        audioContext.currentTime;
+
+
+      /*
+        指を離した瞬間に音を切らず、約60msかけて消す。
+        クリックノイズを防ぎ、琴らしい余韻を少し残す。
+      */
+      masterGain.gain.cancelScheduledValues(
+        releaseTime
+      );
+
+
+      masterGain.gain.setTargetAtTime(
+        0.0001,
+        releaseTime,
+        0.02
+      );
+
+
+      osc1.stop(
+        releaseTime + 0.12
+      );
+
+
+      osc2.stop(
+        releaseTime + 0.12
+      );
+
+
+      osc3.stop(
+        releaseTime + 0.12
+      );
+
+    }
+
+  };
+
+
+  /*
+    弦を弾いた瞬間の成分だけは従来どおり短く終える。
+    押している間は基音と倍音が鳴り続ける。
+  */
   clickOsc.stop(
     now + 0.1
   );
@@ -1737,6 +1815,9 @@ function playNoteAtPointer(
   if (
     !selectedNote
   ) {
+
+    // 鍵盤の外へ出たら、押したままでも音を止める。
+    stopSound();
 
     lastPlayedNote =
       null;
@@ -2152,6 +2233,11 @@ function finishPointerPlaying(
 
 
 
+  // 指・マウスを離したら、持続音を滑らかに止める。
+  stopSound();
+
+
+
   // ---------------------------------
   // 演奏状態を解除
   // ---------------------------------
@@ -2234,6 +2320,8 @@ image.addEventListener(
       event.pointerId ===
       activePointerId
     ) {
+
+      stopSound();
 
       isPointerPlaying =
         false;
