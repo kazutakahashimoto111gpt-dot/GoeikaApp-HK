@@ -557,6 +557,119 @@ body {
 
 
 /* =====================================
+   縦持ち時も横向け画面として表示
+
+   縦向けの画面幅に合わせて縮小・再配置せず、
+   アプリ全体を90度回転する。
+
+   これにより、スマホを縦に持っていても
+   横向け時と同じ幅・高さの座標系、配置、
+   操作部品をそのまま表示する。
+   ===================================== */
+
+@media
+(orientation: portrait) {
+
+
+  body {
+
+    /*
+      横向け時の幅 = 縦持ち画面の高さ
+      横向け時の高さ = 縦持ち画面の幅
+    */
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+
+    width: var(--app-height);
+    height: 100vw;
+
+    margin: 0;
+    padding-top: 6px;
+
+    box-sizing: border-box;
+
+    align-items: flex-start;
+
+    transform:
+      translate(-50%, -50%)
+      rotate(90deg);
+
+    transform-origin: center;
+
+  }
+
+
+
+  /* 横向け時と同じ利用可能領域を使う */
+  #imageArea {
+
+    max-width: var(--app-height);
+    max-height: 100vw;
+
+  }
+
+
+
+  #noteImage {
+
+    max-width: var(--app-height);
+    max-height:
+      calc(100vw - 112px);
+
+  }
+
+
+
+  /* 横向き・低い画面向けの操作部品サイズへ統一 */
+  #keyControl {
+
+    gap: 6px;
+
+    margin-top: 8px;
+
+    padding: 6px 9px;
+
+  }
+
+
+
+  #keyDown,
+  #keyUp {
+
+    width: 40px;
+    height: 40px;
+
+    font-size: 23px;
+
+  }
+
+
+
+  #keyDisplay {
+
+    min-width: 78px;
+    height: 40px;
+
+    font-size: 16px;
+
+  }
+
+
+
+  #flashMarker {
+
+    width: 55px;
+    height: 55px;
+
+  }
+
+}
+
+
+
+/* =====================================
    アップデート通知
    ===================================== */
 

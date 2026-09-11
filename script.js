@@ -1692,26 +1692,23 @@ function playNoteAtPointer(
 
 
   // ---------------------------------
-  // 現在表示中の画像位置・サイズ
-  // ---------------------------------
-
-  const rect =
-    image.getBoundingClientRect();
-
-
-
-  // ---------------------------------
   // 表示画像上の座標
   // ---------------------------------
 
+  /*
+    offsetX / offsetYは、イベントを受け取った画像自身を基準にした
+    座標である。
+
+    縦持ち時はアプリ全体をCSSで回転しているが、画面全体を基準とする
+    clientX / clientYではなく、この画像内の座標を使うことで、
+    回転の向きに関係なく横向け時と同じ鍵を判定できる。
+  */
   const displayX =
-    event.clientX -
-    rect.left;
+    event.offsetX;
 
 
   const displayY =
-    event.clientY -
-    rect.top;
+    event.offsetY;
 
 
 
@@ -1721,12 +1718,12 @@ function playNoteAtPointer(
 
   const pointerX =
     displayX /
-    rect.width;
+    image.clientWidth;
 
 
   const pointerY =
     displayY /
-    rect.height;
+    image.clientHeight;
 
 
 
