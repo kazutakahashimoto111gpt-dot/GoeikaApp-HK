@@ -613,7 +613,7 @@ body {
       回転前の下方向への移動は縦持ち画面では左方向への移動になる。
     */
     transform:
-      translateY(52px);
+      translateY(26px);
 
   }
 
