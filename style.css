@@ -608,6 +608,13 @@ body {
     max-width: var(--app-height);
     max-height: 100vw;
 
+    /*
+      bodyを時計回りに90度回転しているため、
+      回転前の下方向への移動は縦持ち画面では左方向への移動になる。
+    */
+    transform:
+      translateY(52px);
+
   }
 
 
