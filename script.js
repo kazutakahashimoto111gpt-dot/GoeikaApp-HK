@@ -2155,6 +2155,52 @@ image.addEventListener(
 
 
 
+/*
+  Safariは最初のタップ終了後に、次の長押しをダブルタップ操作として
+  判定することがある。touchendも止めて、鍵盤ではこの既定操作を
+  成立させない。
+*/
+image.addEventListener(
+  "touchend",
+
+  function(event) {
+
+    event.preventDefault();
+
+  },
+
+  {
+    passive: false
+  }
+);
+
+
+
+// Safari固有の拡大ジェスチャーも鍵盤上では使わせない。
+for (
+  const eventName
+  of [
+    "gesturestart",
+    "gesturechange",
+    "gestureend",
+    "dblclick"
+  ]
+) {
+
+  image.addEventListener(
+    eventName,
+
+    function(event) {
+
+      event.preventDefault();
+
+    }
+  );
+
+}
+
+
+
 // 選択開始イベントが発生した場合にも、鍵盤上では選択させない。
 image.addEventListener(
   "selectstart",
