@@ -240,7 +240,10 @@
        表示する。
        ===================================== -->
 
-  <div id="updateNotice">
+  <button
+    id="updateNotice"
+    type="button"
+  >
 
     <strong>
       更新があります
@@ -248,9 +251,9 @@
 
     <br>
 
-    アプリを開き直してください
+    タップして更新
 
-  </div>
+  </button>
 
 
 
@@ -308,6 +311,17 @@
         .then(registration => {
 
 
+          const updateNotice =
+            document.getElementById(
+              "updateNotice"
+            );
+
+
+          let isUpdateApplying =
+            false;
+
+
+
           console.log(
             "Service Workerを登録しました"
           );
@@ -319,12 +333,6 @@
           // =================================
 
           function showUpdateNotice() {
-
-
-            const updateNotice =
-              document.getElementById(
-                "updateNotice"
-              );
 
 
             /*
@@ -341,6 +349,84 @@
               "block";
 
           }
+
+
+
+          // =================================
+          // 更新を適用する
+          // =================================
+
+          function applyUpdate() {
+
+
+            const waitingWorker =
+              registration.waiting;
+
+
+            if (
+              isUpdateApplying ||
+              !waitingWorker
+            ) {
+
+              return;
+
+            }
+
+
+            isUpdateApplying =
+              true;
+
+
+            updateNotice.disabled =
+              true;
+
+
+            updateNotice.textContent =
+              "更新しています...";
+
+
+            /*
+              waiting中のService Workerへ、すぐ有効化するよう依頼する。
+              事前キャッシュはインストール時点で完了しているため、
+              更新中に必要なファイルを追加取得することはない。
+            */
+            waitingWorker.postMessage({
+              type: "SKIP_WAITING"
+            });
+
+          }
+
+
+
+          updateNotice.addEventListener(
+            "click",
+            applyUpdate
+          );
+
+
+
+          /*
+            新しいService Workerが制御を引き継いだら、
+            新しいキャッシュを読むため画面を一度だけ再読み込みする。
+          */
+          navigator.serviceWorker.addEventListener(
+            "controllerchange",
+
+            function() {
+
+              if (
+                !isUpdateApplying
+              ) {
+
+                return;
+
+              }
+
+
+              window.location.reload();
+
+            }
+          );
 
 
 
@@ -449,13 +535,9 @@
 
 
                     /*
-                      新SWはこのあと
-                      waiting状態になる。
-
-                      こちらから
-                      skipWaiting()などは行わない。
-
-                      ブラウザ標準の更新処理に任せる。
+                      新SWはwaiting状態になる。
+                      通知をタップしたときだけ即時有効化するため、
+                      演奏中に自動で再読み込みされることはない。
                     */
 
                     showUpdateNotice();

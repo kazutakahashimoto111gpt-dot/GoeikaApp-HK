@@ -950,14 +950,27 @@ body.is-info-open {
     #333;
 
 
-  /*
-    通知そのものには
-    ボタンなどはない。
+  font-family:
+    inherit;
 
-    タップ操作を受け取る必要もない。
-  */
 
-  pointer-events:
+  text-align:
+    left;
+
+
+  cursor:
+    pointer;
+
+
+  touch-action:
+    manipulation;
+
+
+  -webkit-appearance:
+    none;
+
+
+  appearance:
     none;
 
 }
