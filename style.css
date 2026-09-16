@@ -662,13 +662,14 @@ body.is-info-open {
 
 
 /* =====================================
-   横向きの低い画面と縦持ち画面で共通の操作部品サイズ
+   横向きの低い画面と幅の狭い縦持ち画面で共通の操作部品サイズ
    ===================================== */
 
 @media
 (orientation: landscape) and
 (max-height: 500px),
-(orientation: portrait) {
+(orientation: portrait) and
+(max-width: 600px) {
 
   #keyControl {
 
