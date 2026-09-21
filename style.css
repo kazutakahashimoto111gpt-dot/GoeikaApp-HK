@@ -671,6 +671,20 @@ body.is-info-open {
 (orientation: portrait) and
 (max-width: 600px) {
 
+
+  /*
+    この条件では操作ボタン全体が約60pxに収まる。
+    余裕を含めて68pxだけを確保し、横長画面でも鍵盤を
+    必要以上に縮小しない。
+    機種名ではなく、画面の向きと大きさに共通で適用する。
+  */
+  :root {
+
+    --compact-layout-reserved-height: 68px;
+
+  }
+
+
   #keyControl {
 
     gap: 6px;
