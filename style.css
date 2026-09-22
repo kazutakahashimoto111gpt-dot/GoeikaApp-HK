@@ -8,8 +8,8 @@
   --app-height: 100vh;
   --app-height: 100dvh;
 
-  --compact-layout-reserved-height: 112px;
-  --portrait-content-shift: 26px;
+  /* 鍵盤の下に確保するキーコントローラー用の領域 */
+  --key-control-reserved-height: 112px;
 
 }
 
@@ -116,11 +116,17 @@ body.is-info-open {
   position: relative;
 
 
-  display: flex;
+  /*
+    鍵盤とコントローラー用領域を一つのレイアウトとして扱う。
+    これによりbodyの中央揃えが、画像だけでなく操作部も含めて効く。
+  */
+  display: grid;
 
-  flex-direction: column;
+  grid-template-rows:
+    auto
+    var(--key-control-reserved-height);
 
-  align-items: center;
+  justify-items: center;
 
 
   max-width: 100vw;
@@ -148,11 +154,13 @@ body.is-info-open {
 
   display: block;
 
+  grid-row: 1;
+
 
   max-width: 100vw;
-  /* キーコントローラーと余白の分を画面内に確保する */
+  /* キーコントローラー用領域を除いた高さまで、縦横比を保って拡大する */
   max-height:
-    calc(var(--app-height) - 88px);
+    calc(var(--app-height) - var(--key-control-reserved-height));
 
 
   width: auto;
@@ -383,7 +391,9 @@ body.is-info-open {
 
 #keyControl {
 
-  position: static;
+  grid-row: 2;
+
+  align-self: center;
 
 
   display: flex;
@@ -402,7 +412,7 @@ body.is-info-open {
   gap: 10px;
 
 
-  margin-top: 16px;
+  margin-top: 0;
 
 
   padding: 8px 12px;
@@ -680,7 +690,7 @@ body.is-info-open {
   */
   :root {
 
-    --compact-layout-reserved-height: 72px;
+    --key-control-reserved-height: 72px;
 
   }
 
@@ -688,8 +698,6 @@ body.is-info-open {
   #keyControl {
 
     gap: 6px;
-
-    margin-top: 8px;
 
     padding: 6px 9px;
 
@@ -728,70 +736,6 @@ body.is-info-open {
 
 
 /* =====================================
-   iPadなど幅の広い縦持ち画面
-
-   bodyを90度回転しているため、回転前の下方向への移動は
-   画面上では左方向への移動になる。iPad縦持ちでは全体が
-   右寄りに見えるため、iPhoneより26px左へ補正する。
-   ===================================== */
-
-@media
-(orientation: portrait) and
-(min-width: 601px) {
-
-  :root {
-
-    --portrait-content-shift: 97px;
-
-  }
-
-}
-
-
-
-/* =====================================
-   横向き・低い画面向け
-
-   横向きのiPhoneは画面幅が600pxを超えるため、
-   上のスマホ向け指定だけでは標準サイズの
-   キーコントローラーになってしまう。
-   ===================================== */
-
-@media
-(orientation: landscape) and
-(max-height: 500px) {
-
-
-  /*
-    回転直後のiPhone Safariは、実際に見える高さより
-    大きい値でレイアウトする場合がある。
-    画像を少しだけ低くし、下のコントローラー用の
-    余裕を明示的に確保する。
-  */
-  #noteImage {
-
-    max-height:
-      calc(var(--app-height) - var(--compact-layout-reserved-height));
-
-  }
-
-
-
-  /* 鍵盤の上の余白を増やさないよう、画像エリアを上寄せにする */
-  body {
-
-    align-items: flex-start;
-
-    padding-top: 6px;
-
-    box-sizing: border-box;
-
-  }
-}
-
-
-
-/* =====================================
    縦持ち時も横向け画面として表示
 
    縦向けの画面幅に合わせて縮小・再配置せず、
@@ -821,12 +765,6 @@ body.is-info-open {
     height: 100vw;
 
     margin: 0;
-    padding-top: 6px;
-
-    box-sizing: border-box;
-
-    align-items: flex-start;
-
     transform:
       translate(-50%, -50%)
       rotate(90deg);
@@ -837,18 +775,11 @@ body.is-info-open {
 
 
 
-  /* 横向け時と同じ利用可能領域を使う */
+  /* 回転前の横長レイアウトで使える幅・高さを指定する */
   #imageArea {
 
     max-width: var(--app-height);
     max-height: 100vw;
-
-    /*
-      bodyを時計回りに90度回転しているため、
-      回転前の下方向への移動は縦持ち画面では左方向への移動になる。
-    */
-    transform:
-      translateY(var(--portrait-content-shift));
 
   }
 
@@ -858,7 +789,7 @@ body.is-info-open {
 
     max-width: var(--app-height);
     max-height:
-      calc(100vw - var(--compact-layout-reserved-height));
+      calc(100vw - var(--key-control-reserved-height));
 
   }
 }
