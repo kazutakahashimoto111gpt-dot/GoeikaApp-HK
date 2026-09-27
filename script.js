@@ -2602,6 +2602,61 @@ const infoCloseButton =
     "infoCloseButton"
   );
 
+const viewportDebugValues =
+  document.getElementById(
+    "viewportDebugValues"
+  );
+
+// 独立した非表示要素でCSS viewport単位の実寸を測る。
+const viewportUnitProbes = {};
+for (const unit of ["vh", "dvh", "svh", "lvh"]) {
+  const probe = document.createElement("div");
+  probe.setAttribute("aria-hidden", "true");
+  probe.style.cssText = `position:fixed;left:-10000px;top:0;width:1px;height:100${unit};visibility:hidden;pointer-events:none;contain:strict;`;
+  document.body.appendChild(probe);
+  viewportUnitProbes[unit] = probe;
+}
+
+function updateViewportDebug() {
+  if (!isInfoDialogOpen()) return;
+
+  const vv = window.visualViewport;
+  const css = getComputedStyle(document.documentElement);
+  const number = value => value == null ? "—" : String(value);
+  const lines = [
+    "Viewport Debug",
+    "----------------",
+    `window.innerWidth: ${window.innerWidth}`,
+    `window.innerHeight: ${window.innerHeight}`,
+    `window.outerWidth: ${window.outerWidth}`,
+    `window.outerHeight: ${window.outerHeight}`,
+    `documentElement.clientWidth: ${document.documentElement.clientWidth}`,
+    `documentElement.clientHeight: ${document.documentElement.clientHeight}`,
+    `visualViewport.width: ${number(vv?.width)}`,
+    `visualViewport.height: ${number(vv?.height)}`,
+    `visualViewport.offsetTop: ${number(vv?.offsetTop)}`,
+    `visualViewport.offsetLeft: ${number(vv?.offsetLeft)}`,
+    `visualViewport.scale: ${number(vv?.scale)}`,
+    ...["vh", "dvh", "svh", "lvh"].map(unit =>
+      `100${unit}: ${Math.round(viewportUnitProbes[unit].getBoundingClientRect().height)}px`
+    ),
+    `--app-height: ${css.getPropertyValue("--app-height").trim() || "(未設定)"}`,
+    `display-mode standalone: ${window.matchMedia("(display-mode: standalone)").matches}`,
+    `navigator.standalone: ${number(navigator.standalone)}`,
+    `orientation: ${number(screen.orientation?.type)}`,
+    `screen: ${screen.width} x ${screen.height}`,
+    `devicePixelRatio: ${window.devicePixelRatio}`
+  ];
+  viewportDebugValues.textContent = lines.join("\n");
+}
+
+window.addEventListener("resize", updateViewportDebug);
+window.addEventListener("orientationchange", updateViewportDebug);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", updateViewportDebug);
+  window.visualViewport.addEventListener("scroll", updateViewportDebug);
+}
+
 
 let infoPreviouslyFocusedElement =
   null;
@@ -2642,6 +2697,8 @@ function openInfoDialog() {
     "aria-hidden",
     "false"
   );
+
+  updateViewportDebug();
 
 
   /*
