@@ -2638,7 +2638,7 @@ function updateViewportDebug() {
     `visualViewport.offsetLeft: ${number(vv?.offsetLeft)}`,
     `visualViewport.scale: ${number(vv?.scale)}`,
     ...["vh", "dvh", "svh", "lvh"].map(unit =>
-      `100${unit}: ${Math.round(viewportUnitProbes[unit].getBoundingClientRect().height)}px`
+      `100${unit}: ${getComputedStyle(viewportUnitProbes[unit]).height}`
     ),
     `--app-height: ${css.getPropertyValue("--app-height").trim() || "(未設定)"}`,
     `display-mode standalone: ${window.matchMedia("(display-mode: standalone)").matches}`,
