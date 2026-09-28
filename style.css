@@ -1059,6 +1059,19 @@ body.is-info-open {
 }
 
 
+/* 横持ちでは画面右上に配置し、下端のはみ出しを避ける。 */
+@media (orientation: landscape) {
+
+  #infoButton {
+
+    top: 12px;
+    bottom: auto;
+
+  }
+
+}
+
+
 
 /* =====================================
    アプリ情報オーバーレイ
