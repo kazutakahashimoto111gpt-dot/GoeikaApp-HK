@@ -2602,6 +2602,11 @@ const infoCloseButton =
     "infoCloseButton"
   );
 
+const cacheNameValue =
+  document.getElementById(
+    "cacheNameValue"
+  );
+
 const viewportDebugValues =
   document.getElementById(
     "viewportDebugValues"
@@ -2670,6 +2675,66 @@ function isInfoDialogOpen() {
 
 }
 
+let cacheNameRequestId = 0;
+
+function updateCacheName() {
+  const requestId = ++cacheNameRequestId;
+  cacheNameValue.textContent = "確認中...";
+
+  if (!("serviceWorker" in navigator)) {
+    cacheNameValue.textContent = "利用できません";
+    return;
+  }
+
+  let channel = null;
+  let finished = false;
+  const timeoutId = window.setTimeout(
+    () => finish("取得できません"),
+    10000
+  );
+
+  function finish(value) {
+    if (finished) return;
+    finished = true;
+    window.clearTimeout(timeoutId);
+    channel?.port1.close();
+    if (requestId === cacheNameRequestId) {
+      cacheNameValue.textContent = value;
+    }
+  }
+
+  navigator.serviceWorker.ready
+    .then(registration => {
+      if (finished) return;
+
+      const worker =
+        navigator.serviceWorker.controller ||
+        registration.active;
+
+      if (!worker) {
+        finish("取得できません");
+        return;
+      }
+
+      channel = new MessageChannel();
+      channel.port1.onmessage = event => {
+        finish(
+          typeof event.data?.cacheName === "string"
+            ? event.data.cacheName
+            : "取得できません"
+        );
+      };
+
+      worker.postMessage(
+        { type: "GET_CACHE_NAME" },
+        [channel.port2]
+      );
+    })
+    .catch(() => {
+      finish("取得できません");
+    });
+}
+
 
 
 // -------------------------------------
@@ -2699,6 +2764,7 @@ function openInfoDialog() {
   );
 
   updateViewportDebug();
+  updateCacheName();
 
 
   /*

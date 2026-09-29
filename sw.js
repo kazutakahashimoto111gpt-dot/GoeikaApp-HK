@@ -49,7 +49,7 @@
 // ====================================================
 
 const CACHE_NAME =
-  "v4.0.1";
+  "v4.0.2";
 
 
 
@@ -203,6 +203,16 @@ self.addEventListener(
       */
       self.skipWaiting();
 
+    }
+
+    if (
+      event.data &&
+      event.data.type === "GET_CACHE_NAME" &&
+      event.ports[0]
+    ) {
+      event.ports[0].postMessage({
+        cacheName: CACHE_NAME
+      });
     }
 
   }
