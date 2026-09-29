@@ -133,14 +133,38 @@ if (
 // キー設定
 // =====================================
 
+const KEY_SHIFT_STORAGE_KEY =
+  "goeikaapp-hk:keyShift";
+
 function loadKeyShift() {
 
   try {
 
-    const storedValue =
+    let storedValue =
       localStorage.getItem(
+        KEY_SHIFT_STORAGE_KEY
+      );
+
+    if (storedValue === null) {
+      storedValue = localStorage.getItem(
         "kongoKeyShift"
       );
+
+      if (storedValue !== null) {
+        try {
+          localStorage.setItem(
+            KEY_SHIFT_STORAGE_KEY,
+            storedValue
+          );
+        }
+        catch (error) {
+          console.warn(
+            "キー設定を移行できませんでした。",
+            error
+          );
+        }
+      }
+    }
 
 
     if (
@@ -269,7 +293,7 @@ function saveKeyShift() {
   try {
 
     localStorage.setItem(
-      "kongoKeyShift",
+      KEY_SHIFT_STORAGE_KEY,
       keyShift
     );
 

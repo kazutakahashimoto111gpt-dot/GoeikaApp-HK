@@ -191,4 +191,157 @@ assert.equal(
   "PWAの開始URLと事前キャッシュするルートURLが一致しません"
 );
 
-console.log("Project checks passed.");
+async function checkStorageIsolation() {
+  const appUrl = "https://example.com/GoeikaApp-HK/";
+  let cacheName;
+  let networkFetches = 0;
+  let skipWaitingCalls = 0;
+  const handlers = {};
+  const entries = new Map();
+  const deletedCaches = [];
+  const cache = {
+    addAll(paths) {
+      paths.forEach(assetPath => {
+        entries.set(new URL(assetPath, appUrl).href, "precache");
+      });
+      return Promise.resolve();
+    },
+    match(request) {
+      return Promise.resolve(entries.get(request.url || request));
+    },
+    put(request, response) {
+      entries.set(request.url, response);
+      return Promise.resolve();
+    }
+  };
+  const workerContext = {
+    URL,
+    console,
+    self: {
+      location: { href: `${appUrl}sw.js` },
+      skipWaiting() { skipWaitingCalls++; },
+      addEventListener(type, handler) {
+        handlers[type] = handler;
+      }
+    },
+    caches: {
+      open(name) {
+        assert.equal(name, cacheName);
+        return Promise.resolve(cache);
+      },
+      keys() {
+        return Promise.resolve([
+          cacheName,
+          "goeikaapp-hk-v4.0.3",
+          "v4.0.4",
+          "other-pwa-v1"
+        ]);
+      },
+      delete(name) {
+        deletedCaches.push(name);
+        return Promise.resolve(true);
+      }
+    },
+    clients: { claim: () => Promise.resolve() },
+    fetch(request) {
+      networkFetches++;
+      return Promise.resolve({
+        status: 200,
+        url: request.url,
+        clone() { return this; }
+      });
+    }
+  };
+  vm.createContext(workerContext);
+  new vm.Script(serviceWorker, { filename: "sw.js" })
+    .runInContext(workerContext);
+  cacheName = vm.runInContext("CACHE_NAME", workerContext);
+  assert.match(cacheName, /^goeikaapp-hk-v\d+(?:\.\d+)+$/);
+
+  let installPromise;
+  handlers.install({ waitUntil(promise) { installPromise = promise; } });
+  await installPromise;
+  assert.equal(entries.size, precachePaths.length);
+  assert.ok(entries.has(appUrl));
+
+  let reportedCacheName;
+  handlers.message({
+    data: { type: "GET_CACHE_NAME" },
+    ports: [{ postMessage(message) {
+      reportedCacheName = message.cacheName;
+    } }]
+  });
+  assert.equal(reportedCacheName, cacheName);
+  handlers.message({ data: { type: "SKIP_WAITING" }, ports: [] });
+  assert.equal(skipWaitingCalls, 1);
+
+  let activatePromise;
+  handlers.activate({ waitUntil(promise) { activatePromise = promise; } });
+  await activatePromise;
+  assert.deepEqual(deletedCaches, ["goeikaapp-hk-v4.0.3"]);
+
+  async function request(url, mode = "same-origin") {
+    let responsePromise;
+    handlers.fetch({
+      request: { url, method: "GET", mode },
+      respondWith(promise) { responsePromise = promise; }
+    });
+    return responsePromise && await responsePromise;
+  }
+
+  const otherAppUrl = "https://example.com/other-pwa/";
+  assert.equal(await request(otherAppUrl, "navigate"), undefined);
+  assert.equal(await request(`${otherAppUrl}script.js`), undefined);
+  assert.equal(await request(`${appUrl}unlisted.json`), undefined);
+  assert.equal(entries.has(otherAppUrl), false);
+  assert.equal(await request(appUrl, "navigate"), "precache");
+  assert.equal(await request(`${appUrl}index.html`, "navigate"), "precache");
+  assert.equal(networkFetches, 0);
+
+  const scriptUrl = `${appUrl}script.js`;
+  entries.delete(scriptUrl);
+  const runtimeResponse = await request(scriptUrl);
+  assert.equal(runtimeResponse.status, 200);
+  assert.equal(entries.get(scriptUrl), runtimeResponse);
+  assert.equal(networkFetches, 1);
+
+  const keyShiftBlock = readProjectFile("script.js").match(
+    /const KEY_SHIFT_STORAGE_KEY =[\s\S]*?(?=let keyShift =)/
+  );
+  assert.ok(keyShiftBlock, "キー設定の移行処理が見つかりません");
+
+  function loadSetting(initialValues) {
+    const values = new Map(initialValues);
+    const context = {
+      console,
+      localStorage: {
+        getItem(key) { return values.has(key) ? values.get(key) : null; },
+        setItem(key, value) { values.set(key, String(value)); }
+      }
+    };
+    vm.runInNewContext(
+      `${keyShiftBlock[0]}\nthis.loaded = loadKeyShift();`,
+      context
+    );
+    return { loaded: context.loaded, values };
+  }
+
+  const migrated = loadSetting([["kongoKeyShift", "5"]]);
+  assert.equal(migrated.loaded, 5);
+  assert.equal(migrated.values.get("goeikaapp-hk:keyShift"), "5");
+  assert.equal(migrated.values.get("kongoKeyShift"), "5");
+
+  const existing = loadSetting([
+    ["goeikaapp-hk:keyShift", "-2"],
+    ["kongoKeyShift", "5"]
+  ]);
+  assert.equal(existing.loaded, -2);
+  assert.equal(existing.values.get("kongoKeyShift"), "5");
+}
+
+checkStorageIsolation()
+  .then(() => console.log("Project checks passed."))
+  .catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });

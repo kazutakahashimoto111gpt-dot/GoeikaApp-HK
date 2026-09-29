@@ -48,8 +48,11 @@
 //
 // ====================================================
 
+const CACHE_PREFIX =
+  "goeikaapp-hk-";
+
 const CACHE_NAME =
-  "v4.0.4";
+  `${CACHE_PREFIX}v4.0.4`;
 
 
 
@@ -106,6 +109,15 @@ const FILES_TO_CACHE = [
   "./icons/apple-touch-icon.png"
 
 ];
+
+const CACHEABLE_URLS = new Set(
+  FILES_TO_CACHE.map(file =>
+    new URL(file, self.location.href).href
+  )
+);
+
+const APP_URL = new URL("./", self.location.href).href;
+const INDEX_URL = new URL("./index.html", self.location.href).href;
 
 
 
@@ -247,8 +259,8 @@ self.addEventListener(
 
       ここでは、
 
-      新しいCACHE_NAME以外の
-      古いキャッシュを削除する。
+      HK版の旧キャッシュだけを削除する。
+      プレフィックスのないキャッシュは所属を判別できないため残す。
     */
 
     event.waitUntil(
@@ -279,13 +291,12 @@ self.addEventListener(
 
                     CACHE_NAME
 
-                  と違う名前なら、
-
-                  古いバージョンの
-                  キャッシュと判断する。
+                  と違うHK版のキャッシュだけを
+                  古いバージョンと判断する。
                 */
 
                 if (
+                  cacheName.startsWith(CACHE_PREFIX) &&
                   cacheName !==
                   CACHE_NAME
                 ) {
@@ -385,9 +396,21 @@ self.addEventListener(
       既存のインストールがindex.htmlを開始URLとして保持していても、
       ナビゲーションでは同じルートHTMLを返す。
     */
+    const requestUrl = event.request.url;
+    const isAppNavigation =
+      event.request.mode === "navigate" &&
+      (requestUrl === APP_URL || requestUrl === INDEX_URL);
+
+    if (
+      !isAppNavigation &&
+      !CACHEABLE_URLS.has(requestUrl)
+    ) {
+      return;
+    }
+
     const cacheRequest =
-      event.request.mode === "navigate"
-        ? "./"
+      isAppNavigation
+        ? APP_URL
         : event.request;
 
     event.respondWith(
@@ -402,9 +425,11 @@ self.addEventListener(
         を調べる。
       */
 
-      caches.match(
-        cacheRequest
-      )
+      caches.open(CACHE_NAME)
+
+        .then(cache =>
+          cache.match(cacheRequest)
+        )
 
 
         .then(cachedResponse => {
@@ -467,17 +492,14 @@ self.addEventListener(
 
                 ・正常なレスポンス
 
-                ・自分のサイトのファイル
+                ・HK版が使用すると明示したファイル
 
                 の場合だけ保存する。
               */
 
               if (
                 networkResponse &&
-                networkResponse.status === 200 &&
-                event.request.url.startsWith(
-                  self.location.origin
-                )
+                networkResponse.status === 200
               ) {
 
 
