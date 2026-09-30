@@ -2659,11 +2659,16 @@ function updateViewportDebug() {
     `window.innerHeight: ${window.innerHeight}`,
     `window.outerWidth: ${window.outerWidth}`,
     `window.outerHeight: ${window.outerHeight}`,
+    `window.scrollY: ${window.scrollY}`,
     `documentElement.clientWidth: ${document.documentElement.clientWidth}`,
     `documentElement.clientHeight: ${document.documentElement.clientHeight}`,
+    `documentElement.scrollTop: ${document.documentElement.scrollTop}`,
+    `documentElement.rect.top: ${document.documentElement.getBoundingClientRect().top}`,
+    `body.rect.top: ${document.body.getBoundingClientRect().top}`,
     `visualViewport.width: ${number(vv?.width)}`,
     `visualViewport.height: ${number(vv?.height)}`,
     `visualViewport.offsetTop: ${number(vv?.offsetTop)}`,
+    `visualViewport.pageTop: ${number(vv?.pageTop)}`,
     `visualViewport.offsetLeft: ${number(vv?.offsetLeft)}`,
     `visualViewport.scale: ${number(vv?.scale)}`,
     ...["vh", "dvh", "svh", "lvh"].map(unit =>
@@ -2681,6 +2686,7 @@ function updateViewportDebug() {
 
 window.addEventListener("resize", updateViewportDebug);
 window.addEventListener("orientationchange", updateViewportDebug);
+window.addEventListener("scroll", updateViewportDebug);
 if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", updateViewportDebug);
   window.visualViewport.addEventListener("scroll", updateViewportDebug);
