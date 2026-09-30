@@ -52,7 +52,7 @@ const CACHE_PREFIX =
   "goeikaapp-hk-";
 
 const CACHE_NAME =
-  `${CACHE_PREFIX}v4.0.4`;
+  `${CACHE_PREFIX}v4.0.5`;
 
 
 
