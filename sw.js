@@ -1,85 +1,14 @@
-// ====================================================
-// キャッシュの名前
-// ====================================================
-//
-// 【重要】
-//
-// このアプリでは、
-//
-//   HTML
-//   CSS
-//   JavaScript
-//   画像
-//
-// などのアプリ用ファイルを
-//
-//   「キャッシュ優先」
-//
-// で読み込む。
-//
-//
-// そのため、アプリを更新するときは
-//
-//   CACHE_NAME
-//
-// も必ず新しい名前へ変更する。
-
-// ----------------------------------------------------
-// Service Worker自体の更新について
-// ----------------------------------------------------
-//
-// CACHE_NAMEを変更しなくても、
-// sw.jsそのものに変更があれば、
-//
-// ブラウザは新しいService Workerとして
-// 検出することがある。
-//
-//
-// しかし、このアプリでは
-// アプリ本体のバージョンとキャッシュを
-// 分かりやすく一致させるため、
-//
-//   アプリ更新
-//        ↓
-//   CACHE_NAMEも更新
-//
-// という運用に統一する。
-//
-//
-// ====================================================
+// アプリ更新時は、静的ファイルを確実に更新するためキャッシュ名も変更する。
 
 const CACHE_PREFIX =
   "goeikaapp-hk-";
 
 const CACHE_NAME =
-  `${CACHE_PREFIX}v4.0.10`;
+  `${CACHE_PREFIX}v4.0.11`;
 
 
 
-// ========================================
-// 最初にキャッシュしておくファイル
-// ========================================
-
-/*
-  新しいService Workerが
-  インストールされるときに、
-
-  以下のファイルをまとめて
-  新しいキャッシュへ保存する。
-
-
-  このアプリでは、
-
-  HTML
-  CSS
-  JavaScript
-  画像
-  PWA設定
-  アイコン
-
-  など、アプリを動かすために必要な
-  主要ファイルをここへ登録しておく。
-*/
+// オフライン動作に必要な静的ファイルのみ事前キャッシュする。
 
 const FILES_TO_CACHE = [
 
@@ -96,11 +25,6 @@ const FILES_TO_CACHE = [
   "./keyboard-chart.png",
 
   "./icons/favicon-48.png",
-
-
-  // -----------------------------
-  // PWAアイコン
-  // -----------------------------
 
   "./icons/icon-192.png",
 
@@ -121,30 +45,12 @@ const INDEX_URL = new URL("./index.html", self.location.href).href;
 
 
 
-// ========================================
-// ① Service Worker のインストール
-// ========================================
+// Service Workerのインストール
 
 self.addEventListener(
   "install",
 
   event => {
-
-
-    /*
-      新しいService Workerが見つかると、
-
-      まずinstall処理が実行される。
-
-
-      この段階で、
-
-      CACHE_NAMEで指定した
-      新しいキャッシュを作り、
-
-      FILES_TO_CACHEに登録された
-      ファイルを保存する。
-    */
 
     event.waitUntil(
 
@@ -155,29 +61,6 @@ self.addEventListener(
 
 
         .then(cache => {
-
-
-          /*
-            addAll()を使って、
-
-            FILES_TO_CACHEに登録された
-            ファイルをまとめて取得し、
-
-            キャッシュへ保存する。
-
-
-            たとえば、
-
-            ルートHTML
-            style.css
-            script.js
-
-            が更新されていれば、
-
-            このタイミングで
-            新しい内容がキャッシュされる。
-          */
-
           return cache.addAll(
             FILES_TO_CACHE
           );
@@ -194,9 +77,7 @@ self.addEventListener(
 
 
 
-// ========================================
-// ② 更新通知からの即時有効化
-// ========================================
+// 更新通知からの即時有効化
 
 self.addEventListener(
   "message",
@@ -209,10 +90,7 @@ self.addEventListener(
         "SKIP_WAITING"
     ) {
 
-      /*
-        新しいキャッシュの準備が終わったworkerだけが
-        waiting状態でこのメッセージを受け取る。
-      */
+      // 事前キャッシュ済みのwaiting workerのみ即時有効化する。
       self.skipWaiting();
 
     }
@@ -232,37 +110,14 @@ self.addEventListener(
 
 
 
-// ========================================
-// ③ 新しいService Workerの有効化
-// ========================================
+// 新しいService Workerの有効化
 
 self.addEventListener(
   "activate",
 
   event => {
 
-
-    /*
-      新しいService Workerが
-
-        install
-           ↓
-        waiting
-           ↓
-        activate
-
-      と進み、
-
-      実際に有効化されるときに
-      この処理が実行される。
-
-
-      ここでは、
-
-      HK版の旧キャッシュだけを削除する。
-      プレフィックスのないキャッシュは所属を判別できないため残す。
-    */
-
+    // 他アプリへ影響させないよう、このアプリの旧キャッシュだけを削除する。
     event.waitUntil(
 
 
@@ -270,42 +125,16 @@ self.addEventListener(
 
 
         .then(cacheNames => {
-
-
-          /*
-            caches.keys()によって、
-
-            現在保存されている
-            キャッシュの名前をすべて取得する。
-          */
-
           return Promise.all(
 
 
             cacheNames.map(
               cacheName => {
-
-
-                /*
-                  現在使用する
-
-                    CACHE_NAME
-
-                  と違うHK版のキャッシュだけを
-                  古いバージョンと判断する。
-                */
-
                 if (
                   cacheName.startsWith(CACHE_PREFIX) &&
                   cacheName !==
                   CACHE_NAME
                 ) {
-
-
-                  /*
-                    古いキャッシュを削除する。
-                  */
-
                   return caches.delete(
                     cacheName
                   );
@@ -336,45 +165,12 @@ self.addEventListener(
 
 
 
-// ========================================
-// ④ 通信処理
-//
-// 【キャッシュ優先】
-//
-// HTML
-// CSS
-// JavaScript
-// 画像
-//
-// などを区別せず、
-//
-//   まずキャッシュ
-//        ↓
-//   なければネット
-//
-// の順番で取得する。
-// ========================================
+// アプリ用静的ファイルはキャッシュ優先で取得する。
 
 self.addEventListener(
   "fetch",
 
   event => {
-
-
-    // -------------------------------------
-    // GET通信だけを対象にする
-    // -------------------------------------
-
-    /*
-      ファイルを取得する通常の通信は
-      GETで行われる。
-
-
-      POSTなど別の種類の通信については、
-
-      このService Workerでは
-      特別な処理を行わない。
-    */
 
     if (
       event.request.method !==
@@ -385,17 +181,7 @@ self.addEventListener(
 
     }
 
-
-
-    // =====================================
-    // キャッシュ優先で取得
-    // =====================================
-
-    /*
-      HTMLの入口は「./」へ統一する。
-      既存のインストールがindex.htmlを開始URLとして保持していても、
-      ナビゲーションでは同じルートHTMLを返す。
-    */
+    // 旧インストールの開始URLがindex.htmlでも、ルートHTMLへ統一する。
     const requestUrl = event.request.url;
     const isAppNavigation =
       event.request.mode === "navigate" &&
@@ -414,17 +200,6 @@ self.addEventListener(
         : event.request;
 
     event.respondWith(
-
-
-      /*
-        まず、
-
-          「このリクエストに対応するものが
-            キャッシュに保存されているか？」
-
-        を調べる。
-      */
-
       caches.open(CACHE_NAME)
 
         .then(cache =>
@@ -433,47 +208,13 @@ self.addEventListener(
 
 
         .then(cachedResponse => {
-
-
-          // ---------------------------------
-          // キャッシュにあった場合
-          // ---------------------------------
-
           if (
             cachedResponse
           ) {
-
-
-            /*
-              キャッシュにあれば、
-
-              ネットワークへ取りに行かず
-              そのままキャッシュを返す。
-
-
-              これが
-
-                「キャッシュ優先」
-
-              の中心となる処理。
-            */
-
             return cachedResponse;
 
 
           }
-
-
-
-          // ---------------------------------
-          // キャッシュになかった場合
-          // ---------------------------------
-
-          /*
-            キャッシュに存在しなかった場合だけ、
-
-            ネットワークから取得する。
-          */
 
           return fetch(
             event.request
@@ -481,52 +222,12 @@ self.addEventListener(
 
 
             .then(networkResponse => {
-
-
-              /*
-                ネットから取得できたファイルを
-                キャッシュにも保存する。
-
-
-                ただし、
-
-                ・正常なレスポンス
-
-                ・HK版が使用すると明示したファイル
-
-                の場合だけ保存する。
-              */
-
               if (
                 networkResponse &&
                 networkResponse.status === 200
               ) {
-
-
-                /*
-                  Responseのbodyは
-                  基本的に一度しか使用できない。
-
-
-                  このあと、
-
-                  ① キャッシュへ保存
-
-                  ② ブラウザへ返す
-
-                  の両方で使いたいので、
-
-                  clone()で複製する。
-                */
-
                 const responseClone =
                   networkResponse.clone();
-
-
-
-                // -----------------------------
-                // 現在のキャッシュを開く
-                // -----------------------------
 
                 return caches.open(
                   CACHE_NAME
@@ -534,20 +235,6 @@ self.addEventListener(
 
 
                   .then(cache => {
-
-
-                    /*
-                      ネットから取得したファイルを
-                      キャッシュへ追加する。
-
-
-                      次回同じファイルが
-                     要求されたときには、
-
-                      キャッシュから
-                      すぐ取得できるようになる。
-                    */
-
                     return cache.put(
                       event.request,
                       responseClone
@@ -573,15 +260,6 @@ self.addEventListener(
 
 
               }
-
-
-
-              /*
-                元のnetworkResponseは、
-
-                実際にページを表示している
-                ブラウザへ返す。
-              */
 
               return networkResponse;
 
