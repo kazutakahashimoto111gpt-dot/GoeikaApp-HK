@@ -100,7 +100,7 @@ for (const [areaName, expectedCount] of [
 }
 
 const pngBuffer = fs.readFileSync(
-  path.join(projectRoot, "keyboard-chart.png")
+  path.join(projectRoot, "assets/keyboard-chart.png")
 );
 const pngWidth = pngBuffer.readUInt32BE(16);
 const pngHeight = pngBuffer.readUInt32BE(20);
@@ -166,7 +166,7 @@ assert.equal(
   "FILES_TO_CACHEに重複があります"
 );
 assert.ok(
-  precachePaths.includes("./icons/favicon-48.png"),
+  precachePaths.includes("./assets/icons/favicon-48.png"),
   "faviconが事前キャッシュに含まれていません"
 );
 assert.ok(

@@ -1,5 +1,5 @@
 /*
-  keyboard-chart.png と鍵判定の対応情報。
+  assets/keyboard-chart.png と鍵判定の対応情報。
   画像を差し替える場合は、基準寸法と各領域を一緒に更新する。
   自動テストでも画像の実寸とこの基準寸法が一致することを確認する。
 */
@@ -58,7 +58,7 @@ const keyboardLayout = {
 
 const notes = [
 
-  // keyboard-chart.png の左から右へ、表記のある25鍵を半音階で登録する。
+  // assets/keyboard-chart.png の左から右へ、表記のある25鍵を半音階で登録する。
   { keyType: "white", keyIndex: 0,  frequency: 220.000 },
   { keyType: "black", keyIndex: 0,  frequency: 233.082 },
   { keyType: "white", keyIndex: 1,  frequency: 246.942 },

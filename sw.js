@@ -4,7 +4,7 @@ const CACHE_PREFIX =
   "goeikaapp-hk-";
 
 const CACHE_NAME =
-  `${CACHE_PREFIX}v4.0.11`;
+  `${CACHE_PREFIX}v4.0.12`;
 
 
 
@@ -22,15 +22,15 @@ const FILES_TO_CACHE = [
 
   "./notes.js",
 
-  "./keyboard-chart.png",
+  "./assets/keyboard-chart.png",
 
-  "./icons/favicon-48.png",
+  "./assets/icons/favicon-48.png",
 
-  "./icons/icon-192.png",
+  "./assets/icons/icon-192.png",
 
-  "./icons/icon-512.png",
+  "./assets/icons/icon-512.png",
 
-  "./icons/apple-touch-icon.png"
+  "./assets/icons/apple-touch-icon.png"
 
 ];
 
