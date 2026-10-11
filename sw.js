@@ -85,6 +85,13 @@ self.addEventListener(
   event => {
 
     if (
+      event.origin &&
+      event.origin !== self.location.origin
+    ) {
+      return;
+    }
+
+    if (
       event.data &&
       event.data.type ===
         "SKIP_WAITING"
