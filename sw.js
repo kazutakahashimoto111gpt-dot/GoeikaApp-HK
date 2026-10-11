@@ -85,7 +85,6 @@ self.addEventListener(
   event => {
 
     if (
-      event.origin &&
       event.origin !== self.location.origin
     ) {
       return;
