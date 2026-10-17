@@ -193,6 +193,7 @@ assert.equal(
 
 async function checkStorageIsolation() {
   const appUrl = "https://example.com/GoeikaApp-HK/";
+  const appOrigin = new URL(appUrl).origin;
   let cacheName;
   let networkFetches = 0;
   let skipWaitingCalls = 0;
@@ -218,7 +219,7 @@ async function checkStorageIsolation() {
     URL,
     console,
     self: {
-      location: { href: `${appUrl}sw.js` },
+      location: { href: `${appUrl}sw.js`, origin: appOrigin },
       skipWaiting() { skipWaitingCalls++; },
       addEventListener(type, handler) {
         handlers[type] = handler;
@@ -264,16 +265,40 @@ async function checkStorageIsolation() {
   assert.equal(entries.size, precachePaths.length);
   assert.ok(entries.has(appUrl));
 
-  let reportedCacheName;
-  handlers.message({
-    data: { type: "GET_CACHE_NAME" },
-    ports: [{ postMessage(message) {
-      reportedCacheName = message.cacheName;
-    } }]
-  });
-  assert.equal(reportedCacheName, cacheName);
-  handlers.message({ data: { type: "SKIP_WAITING" }, ports: [] });
-  assert.equal(skipWaitingCalls, 1);
+  for (const [label, originFields, expectedCalls] of [
+    ["同一オリジン", { origin: appOrigin }, 1],
+    ["異なるオリジン", { origin: "https://untrusted.example" }, 0],
+    ["origin未設定", {}, 0]
+  ]) {
+    const replies = [];
+    handlers.message({
+      ...originFields,
+      data: { type: "GET_CACHE_NAME" },
+      ports: [{ postMessage(message) {
+        replies.push(message);
+      } }]
+    });
+    assert.equal(
+      replies.length,
+      expectedCalls,
+      `${label}のGET_CACHE_NAME応答回数が正しくありません`
+    );
+    if (expectedCalls === 1) {
+      assert.equal(replies[0].cacheName, cacheName, "現在のキャッシュ名が一致しません");
+    }
+
+    const previousSkipWaitingCalls = skipWaitingCalls;
+    handlers.message({
+      ...originFields,
+      data: { type: "SKIP_WAITING" },
+      ports: []
+    });
+    assert.equal(
+      skipWaitingCalls - previousSkipWaitingCalls,
+      expectedCalls,
+      `${label}のSKIP_WAITING呼び出し回数が正しくありません`
+    );
+  }
 
   let activatePromise;
   handlers.activate({ waitUntil(promise) { activatePromise = promise; } });
